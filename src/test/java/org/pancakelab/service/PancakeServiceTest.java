@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.pancakelab.model.Order;
+import org.pancakelab.model.OrderActionResult;
+import org.pancakelab.model.pancakes.PancakeFactory;
 
 import java.util.List;
 import java.util.Set;
@@ -15,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PancakeServiceTest {
-    private PancakeService pancakeService = new PancakeService();
+    private final PancakeService pancakeService = new PancakeService();
     private Order          order          = null;
 
     private final static String DARK_CHOCOLATE_PANCAKE_DESCRIPTION           = "Delicious pancake with dark chocolate!";
@@ -122,9 +124,12 @@ public class PancakeServiceTest {
         List<String> pancakesToDeliver = pancakeService.viewOrder(order.getId());
 
         // exercise
-        Object[] deliveredOrder = pancakeService.deliverOrder(order.getId());
+        OrderActionResult<Object[]> deliverOrderResult = pancakeService.deliverOrder(order.getId());
 
         // verify
+        assertTrue(deliverOrderResult.isSuccess());
+        Object[] deliveredOrder = deliverOrderResult.getReturnObject();
+
         Set<UUID> completedOrders = pancakeService.listCompletedOrders();
         assertFalse(completedOrders.contains(order.getId()));
 
@@ -135,7 +140,7 @@ public class PancakeServiceTest {
 
         assertEquals(List.of(), ordersPancakes);
         assertEquals(order.getId(), ((Order) deliveredOrder[0]).getId());
-        assertEquals(pancakesToDeliver, (List<String>) deliveredOrder[1]);
+        assertEquals(pancakesToDeliver, deliveredOrder[1]);
 
         // tear down
         order = null;
@@ -166,8 +171,8 @@ public class PancakeServiceTest {
     }
 
     private void addPancakes() {
-        pancakeService.addDarkChocolatePancake(order.getId(), 3);
-        pancakeService.addMilkChocolatePancake(order.getId(), 3);
-        pancakeService.addMilkChocolateHazelnutsPancake(order.getId(), 3);
+        pancakeService.addPancake(order.getId(), PancakeFactory.darkChocolatePancake(), 3);
+        pancakeService.addPancake(order.getId(), PancakeFactory.milkChocolatePancake(),3);
+        pancakeService.addPancake(order.getId(), PancakeFactory.milkChocolateHazelnutsPancake(), 3);
     }
 }

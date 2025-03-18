@@ -1,17 +1,20 @@
 package org.pancakelab.model;
 
-import java.util.Objects;
-import java.util.UUID;
+import org.pancakelab.model.pancakes.Pancake;
+
+import java.util.*;
 
 public class Order {
     private final UUID id;
     private final int building;
     private final int room;
+    private final List<Pancake> pancakes;
 
     public Order(int building, int room) {
         this.id = UUID.randomUUID();
         this.building = building;
         this.room = room;
+        this.pancakes = new ArrayList<>();
     }
 
     public UUID getId() {
@@ -24,6 +27,20 @@ public class Order {
 
     public int getRoom() {
         return room;
+    }
+
+    public List<Pancake> getPancakes() {
+        return pancakes;
+    }
+
+    public void addPancake(Pancake pancake) {
+        this.pancakes.add(pancake);
+    }
+
+    public List<String> view() {
+        return this.getPancakes().stream()
+                .map(Pancake::description)
+                .toList();
     }
 
     @Override
