@@ -1,6 +1,7 @@
 package org.pancakelab.model;
 
 public class OrderActionResult<T> {
+
     final boolean success;
     final String message;
     final T returnObject;
@@ -29,5 +30,9 @@ public class OrderActionResult<T> {
 
     public T getReturnObject() {
         return returnObject;
+    }
+
+    public String getMessage() {
+        return message;
     }
 }

@@ -33,8 +33,9 @@ public class Order {
         return pancakes;
     }
 
-    public void addPancake(Pancake pancake) {
+    public Order addPancake(Pancake pancake) {
         this.pancakes.add(pancake);
+        return this;
     }
 
     public List<String> view() {

@@ -2,25 +2,24 @@ package org.pancakelab.service;
 
 import org.pancakelab.model.Order;
 import org.pancakelab.model.OrderActionResult;
+import org.pancakelab.model.OrderStatus;
 import org.pancakelab.model.pancakes.*;
+import org.pancakelab.repository.OrderRepository;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PancakeService {
-    private final Map<UUID, Order>    orders          = new ConcurrentHashMap<>();
-    private final Set<UUID>           completedOrders = new HashSet<>();
-    private final Set<UUID>           preparedOrders  = new HashSet<>();
+    private final OrderRepository orderRepository = new OrderRepository();
 
     public Order createOrder(int building, int room) {
         Order order = new Order(building, room);
-        orders.put(order.getId(), order);
+        orderRepository.upsertOrder(order);
         return order;
     }
 
     public List<String> viewOrder(UUID orderId) {
-        Order order = orders.get(orderId);
+        Order order = orderRepository.getOrderById(orderId);
         if (Objects.isNull(order)) {
             return List.of();
         }
@@ -28,8 +27,8 @@ public class PancakeService {
     }
 
     public OrderActionResult<Void> addPancake(UUID orderId, Pancake pancake, int count) {
-        Order order = orders.get(orderId);
-        if (Objects.isNull(orderId)) {
+        Order order = orderRepository.getOrderById(orderId);
+        if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
         for (int i = 0; i < count; i++) {
@@ -41,8 +40,8 @@ public class PancakeService {
 
     public OrderActionResult<Void> removePancakes(String description, UUID orderId, int count) {
         final AtomicInteger removedCount = new AtomicInteger(0);
-        Order order = orders.get(orderId);
-        if (Objects.isNull(orderId)) {
+        Order order = orderRepository.getOrderById(orderId);
+        if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
         order.getPancakes().removeIf(pancake ->
@@ -54,49 +53,43 @@ public class PancakeService {
     }
 
     public OrderActionResult<Void> cancelOrder(UUID orderId) {
-        Order order = orders.get(orderId);
-        if (Objects.isNull(orderId)) {
+        Order order = orderRepository.getOrderById(orderId);
+        if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        OrderLog.logCancelOrder(order);
-        orders.remove(orderId);
-        completedOrders.removeIf(u -> u.equals(orderId));
-        preparedOrders.removeIf(u -> u.equals(orderId));
-
+        orderRepository.delete(orderId);
         OrderLog.logCancelOrder(order);
         return OrderActionResult.success("Order successfully removed", null);
     }
 
     public void completeOrder(UUID orderId) {
-        completedOrders.add(orderId);
+        orderRepository.updateStatus(orderId, OrderStatus.COMPLETED);
     }
 
     public Set<UUID> listCompletedOrders() {
-        return completedOrders;
+        return orderRepository.getCompletedOrders();
     }
 
     public void prepareOrder(UUID orderId) {
-        preparedOrders.add(orderId);
-        completedOrders.removeIf(u -> u.equals(orderId));
+        orderRepository.updateStatus(orderId, OrderStatus.PREPARED);
     }
 
     public Set<UUID> listPreparedOrders() {
-        return preparedOrders;
+        return orderRepository.getPreparedOrders();
     }
 
     public OrderActionResult<Object[]> deliverOrder(UUID orderId) {
-        if (!preparedOrders.contains(orderId)) return null;
-
-        Order order = orders.get(orderId);
-        if (Objects.isNull(orderId)) {
+        Order order = orderRepository.getOrderById(orderId);
+        if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
+        if (!orderRepository.hasStatus(order.getId(), OrderStatus.PREPARED)) {
+            return null;
+        }
+
         List<String> pancakesToDeliver = viewOrder(orderId);
         OrderLog.logDeliverOrder(order);
-
-        orders.remove(orderId);
-        preparedOrders.removeIf(u -> u.equals(orderId));
-
+        orderRepository.delete(orderId);
         return OrderActionResult.success("Order delivered", new Object[] {order, pancakesToDeliver});
     }
 }
