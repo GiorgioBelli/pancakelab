@@ -3,6 +3,7 @@ package org.pancakelab.model;
 import org.pancakelab.model.pancakes.Pancake;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Order {
     private final UUID id;
@@ -35,6 +36,16 @@ public class Order {
 
     public Order addPancake(Pancake pancake) {
         this.pancakes.add(pancake);
+        return this;
+    }
+
+    public Order removePancakesByDescription(String description, int count) {
+        if (count <=0 ){
+            return this;
+        }
+        final AtomicInteger removedCount = new AtomicInteger(0);
+        this.getPancakes()
+                .removeIf(pancake -> pancake.description().equals(description) && removedCount.getAndIncrement() < count);
         return this;
     }
 

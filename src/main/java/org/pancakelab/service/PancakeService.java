@@ -10,7 +10,6 @@ import org.pancakelab.validation.Validator;
 import org.pancakelab.validation.ValidationResult;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class PancakeService {
     private final OrderRepository orderRepository = new OrderRepository();
@@ -47,13 +46,12 @@ public class PancakeService {
     }
 
     public OrderActionResult<Void> removePancakes(String description, UUID orderId, int count) {
-        final AtomicInteger removedCount = new AtomicInteger(0);
         Order order = orderRepository.getOrderById(orderId);
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        order.getPancakes().removeIf(pancake -> pancake.description().equals(description) && removedCount.getAndIncrement() < count);
-        OrderLog.logRemovePancakes(order, description, removedCount.get());
+        order.removePancakesByDescription(description, count);
+        OrderLog.logRemovePancakes(order, description, count);
         return OrderActionResult.success();
     }
 
