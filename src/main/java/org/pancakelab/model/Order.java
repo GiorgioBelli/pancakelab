@@ -11,11 +11,15 @@ public class Order {
     private final int room;
     private final List<Pancake> pancakes;
 
-    public Order(int building, int room) {
-        this.id = UUID.randomUUID();
+    protected Order(UUID id, int building, int room) {
+        this.id = id;
         this.building = building;
         this.room = room;
         this.pancakes = new ArrayList<>();
+    }
+
+    public Order(int building, int room) {
+        this(UUID.randomUUID(), building, room);
     }
 
     public UUID getId() {

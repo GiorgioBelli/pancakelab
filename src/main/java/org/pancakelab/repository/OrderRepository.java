@@ -3,10 +3,7 @@ package org.pancakelab.repository;
 import org.pancakelab.model.Order;
 import org.pancakelab.model.OrderStatus;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OrderRepository {
@@ -60,12 +57,17 @@ public class OrderRepository {
     }
 
     public boolean hasStatus(UUID orderId, OrderStatus status) {
-        return switch (status) {
-            case COMPLETED -> this.completedOrders.contains(orderId);
-            case PREPARED -> this.preparedOrders.contains(orderId);
-            case CREATED -> this.orders.containsKey(orderId);
-            case DELIVERED -> !this.orders.containsKey(orderId);
-        };
+        if (Objects.isNull(status)) {
+            return false;
+        }
+        return status.equals(getStatus(orderId));
+    }
+
+    public OrderStatus getStatus(UUID orderId) {
+        if ( this.completedOrders.contains(orderId)) { return OrderStatus.COMPLETED; }
+        if ( this.preparedOrders.contains(orderId)) { return OrderStatus.PREPARED; }
+        if ( this.orders.containsKey(orderId)) { return OrderStatus.CREATED; }
+        else { return OrderStatus.DELIVERED; }
     }
 
 }

@@ -6,14 +6,15 @@ import org.pancakelab.model.OrderStatus;
 import org.pancakelab.model.pancakes.*;
 import org.pancakelab.repository.OrderRepository;
 import org.pancakelab.validation.CreateOrderValidator;
-import org.pancakelab.validation.Validator;
+import org.pancakelab.validation.OrderStatusValidator;
 import org.pancakelab.validation.ValidationResult;
 
 import java.util.*;
 
 public class PancakeService {
     private final OrderRepository orderRepository = new OrderRepository();
-    private final Validator createOrderValidator = new CreateOrderValidator();
+    private final CreateOrderValidator createOrderValidator = new CreateOrderValidator();
+    private final OrderStatusValidator orderStatusValidator = new OrderStatusValidator();
 
     public OrderActionResult<Order> createOrder(int building, int room) {
         Order order = new Order(building, room);
@@ -60,21 +61,39 @@ public class PancakeService {
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
+        OrderStatus status = orderRepository.getStatus(orderId);
+        ValidationResult validationResult = orderStatusValidator.validateCancellation(status);
+        if(validationResult.isInvalid()) {
+            return OrderActionResult.failed(validationResult.toString());
+        }
         orderRepository.delete(orderId);
         OrderLog.logCancelOrder(order);
         return OrderActionResult.success();
     }
 
-    public void completeOrder(UUID orderId) {
-        orderRepository.updateStatus(orderId, OrderStatus.COMPLETED);
+    public OrderActionResult<Void> completeOrder(UUID orderId) {
+        Order order = orderRepository.getOrderById(orderId);
+        OrderStatus status = orderRepository.getStatus(orderId);
+        ValidationResult validationResult = orderStatusValidator.validateNextState(status, OrderStatus.COMPLETED);
+        if(validationResult.isInvalid()) {
+            return OrderActionResult.failed(validationResult.toString());
+        }
+        orderRepository.updateStatus(order.getId(), OrderStatus.COMPLETED);
+        return OrderActionResult.success();
     }
 
     public Set<UUID> listCompletedOrders() {
         return orderRepository.getCompletedOrders();
     }
 
-    public void prepareOrder(UUID orderId) {
+    public OrderActionResult<Void> prepareOrder(UUID orderId) {
+        OrderStatus status = orderRepository.getStatus(orderId);
+        ValidationResult validationResult = orderStatusValidator.validateNextState(status, OrderStatus.PREPARED);
+        if(validationResult.isInvalid()) {
+            return OrderActionResult.failed(validationResult.toString());
+        }
         orderRepository.updateStatus(orderId, OrderStatus.PREPARED);
+        return OrderActionResult.success();
     }
 
     public Set<UUID> listPreparedOrders() {
@@ -86,8 +105,10 @@ public class PancakeService {
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        if (!orderRepository.hasStatus(order.getId(), OrderStatus.PREPARED)) {
-            return null;
+        OrderStatus status = orderRepository.getStatus(orderId);
+        ValidationResult validationResult = orderStatusValidator.validateNextState(status, OrderStatus.DELIVERED);
+        if(validationResult.isInvalid()) {
+            return OrderActionResult.failed(validationResult.toString());
         }
 
         List<String> pancakesToDeliver = viewOrder(orderId);

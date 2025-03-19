@@ -2,9 +2,8 @@ package org.pancakelab.validation;
 
 import org.pancakelab.model.Order;
 
-public class CreateOrderValidator implements Validator {
+public class CreateOrderValidator {
 
-    @Override
     public ValidationResult validate(Order order) {
         ValidationResult validationResult = ValidationResult.valid();
         if (order.getBuilding() <= 0) {
