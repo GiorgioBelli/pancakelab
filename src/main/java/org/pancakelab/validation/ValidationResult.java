@@ -31,6 +31,10 @@ public class ValidationResult {
         return this;
     }
 
+    public Collection<String> getErrors() {
+        return errors;
+    }
+
     @Override
     public String toString() {
         return "["+ String.join(", ", this.errors) +"]";
