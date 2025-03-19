@@ -12,8 +12,12 @@ public class OrderActionResult<T> {
         this.returnObject = returnObject;
     }
 
-    public static <T> OrderActionResult<T> success(String message, T returnObject) {
-        return new OrderActionResult<>(true, message, returnObject);
+    public static <T> OrderActionResult<T> success(T returnObject) {
+        return new OrderActionResult<>(true, null, returnObject);
+    }
+
+    public static <T> OrderActionResult<T> success() {
+        return success(null);
     }
 
     public static <T> OrderActionResult<T> failed(String message) {

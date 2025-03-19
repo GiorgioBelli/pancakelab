@@ -69,7 +69,7 @@ class OrderRepositoryTest {
     }
 
     @Test
-    void upsertOrder() {
+    void GivenOrder_WhenUpsert_ThenIsAvailable() {
         int initialCount = repository.getOrders().size();
         Order newOrder = new Order(400,40);
         repository.upsertOrder(newOrder);
@@ -80,7 +80,7 @@ class OrderRepositoryTest {
     }
 
     @Test
-    void delete() {
+    void GivenOrder_WhenDeleted_ThenIsNotAvailable() {
         Order orderToRemove = orders.get(1);
         repository.delete(orderToRemove.getId());
         List<Order> orders = repository.getOrders();
@@ -91,7 +91,7 @@ class OrderRepositoryTest {
     }
 
     @Test
-    void updateStatus() {
+    void GivenOrder_WhenChangeStatus_ThenStatusHasChanged() {
         Order orderToUpdate = orders.get(0);
         int completedOrdersCount = repository.getCompletedOrders().size();
         repository.updateStatus(orderToUpdate.getId(), OrderStatus.COMPLETED);
@@ -101,7 +101,7 @@ class OrderRepositoryTest {
     }
 
     @Test
-    void hasStatus() {
+    void GivenOrders_WhenHasStatus_ThenTrue() {
         assertTrue(repository.hasStatus(orders.get(0).getId(), OrderStatus.CREATED));
         assertTrue(repository.hasStatus(orders.get(1).getId(), OrderStatus.PREPARED));
         assertTrue(repository.hasStatus(orders.get(2).getId(), OrderStatus.COMPLETED));

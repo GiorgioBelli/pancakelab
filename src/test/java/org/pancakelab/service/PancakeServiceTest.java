@@ -30,8 +30,10 @@ public class PancakeServiceTest {
         // setup
 
         // exercise
-        order = pancakeService.createOrder(10, 20);
+        OrderActionResult<Order> orderResult = pancakeService.createOrder(10, 20);
+        order = orderResult.getReturnObject();
 
+        assertTrue(orderResult.isSuccess());
         assertEquals(10, order.getBuilding());
         assertEquals(20, order.getRoom());
 
@@ -150,7 +152,8 @@ public class PancakeServiceTest {
     @org.junit.jupiter.api.Order(70)
     public void GivenOrderExists_WhenCancellingOrder_ThenOrderAndPancakesRemoved_Test() {
         // setup
-        order = pancakeService.createOrder(10, 20);
+        OrderActionResult<Order> orderResult = pancakeService.createOrder(10, 20);
+        order = orderResult.getReturnObject();
         addPancakes();
 
         // exercise
@@ -166,6 +169,16 @@ public class PancakeServiceTest {
         List<String> ordersPancakes = pancakeService.viewOrder(order.getId());
 
         assertEquals(List.of(), ordersPancakes);
+
+        // tear down
+    }
+
+    @Test
+    @org.junit.jupiter.api.Order(70)
+    public void  WhenCreatingOrderAndInvalid_ThenValidationFails() {
+        // setup
+        OrderActionResult<Order> orderResult = pancakeService.createOrder(-10, 20);
+        assertTrue(orderResult.isFailed());
 
         // tear down
     }

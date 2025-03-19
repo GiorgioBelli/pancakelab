@@ -5,17 +5,25 @@ import org.pancakelab.model.OrderActionResult;
 import org.pancakelab.model.OrderStatus;
 import org.pancakelab.model.pancakes.*;
 import org.pancakelab.repository.OrderRepository;
+import org.pancakelab.validation.CreateOrderValidator;
+import org.pancakelab.validation.Validator;
+import org.pancakelab.validation.ValidationResult;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PancakeService {
     private final OrderRepository orderRepository = new OrderRepository();
+    private final Validator createOrderValidator = new CreateOrderValidator();
 
-    public Order createOrder(int building, int room) {
+    public OrderActionResult<Order> createOrder(int building, int room) {
         Order order = new Order(building, room);
+        ValidationResult validationResult = createOrderValidator.validate(order);
+        if (validationResult.isInvalid()) {
+            return OrderActionResult.failed(String.format("Cannot create order due to the following errors: %s", validationResult));
+        }
         orderRepository.upsertOrder(order);
-        return order;
+        return OrderActionResult.success(order);
     }
 
     public List<String> viewOrder(UUID orderId) {
@@ -35,7 +43,7 @@ public class PancakeService {
             order.addPancake(pancake);
         }
         OrderLog.logAddPancake(order, pancake.description());
-        return OrderActionResult.success("Pancake added to order", null);
+        return OrderActionResult.success();
     }
 
     public OrderActionResult<Void> removePancakes(String description, UUID orderId, int count) {
@@ -44,12 +52,9 @@ public class PancakeService {
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        order.getPancakes().removeIf(pancake ->
-                   pancake.description().equals(description) &&
-                   removedCount.getAndIncrement() < count
-        );
+        order.getPancakes().removeIf(pancake -> pancake.description().equals(description) && removedCount.getAndIncrement() < count);
         OrderLog.logRemovePancakes(order, description, removedCount.get());
-        return OrderActionResult.success("Pancake removed from order", null);
+        return OrderActionResult.success();
     }
 
     public OrderActionResult<Void> cancelOrder(UUID orderId) {
@@ -59,7 +64,7 @@ public class PancakeService {
         }
         orderRepository.delete(orderId);
         OrderLog.logCancelOrder(order);
-        return OrderActionResult.success("Order successfully removed", null);
+        return OrderActionResult.success();
     }
 
     public void completeOrder(UUID orderId) {
@@ -90,6 +95,6 @@ public class PancakeService {
         List<String> pancakesToDeliver = viewOrder(orderId);
         OrderLog.logDeliverOrder(order);
         orderRepository.delete(orderId);
-        return OrderActionResult.success("Order delivered", new Object[] {order, pancakesToDeliver});
+        return OrderActionResult.success(new Object[]{order, pancakesToDeliver});
     }
 }

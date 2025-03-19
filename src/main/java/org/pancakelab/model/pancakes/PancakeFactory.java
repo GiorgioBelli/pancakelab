@@ -27,7 +27,4 @@ public class PancakeFactory {
     public static Pancake milkChocolateHazelnutsPancake() {
         return new Pancake(Ingredient.MILK_CHOCOLATE, Ingredient.HAZELNUTS);
     }
-
-
-
 }
