@@ -31,6 +31,7 @@ public class PancakeServiceTest {
 
         // exercise
         OrderActionResult<Order> orderResult = pancakeService.createOrder(10, 20);
+        assertTrue(orderResult.isSuccess());
         order = orderResult.getReturnObject();
 
         assertTrue(orderResult.isSuccess());

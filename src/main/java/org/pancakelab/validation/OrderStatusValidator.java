@@ -6,7 +6,7 @@ public class OrderStatusValidator {
 
     public ValidationResult validateNextState(OrderStatus currentStatus, OrderStatus nextStatus) {
         ValidationResult validationResult = ValidationResult.valid();
-        if (currentStatus.canChangeTo(nextStatus)) {
+        if (!currentStatus.canChangeTo(nextStatus)) {
             validationResult.addError(String.format("Order with state %s cannot be move to %s", currentStatus, nextStatus));
         }
         return validationResult;
