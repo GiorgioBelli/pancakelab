@@ -4,6 +4,7 @@ import org.pancakelab.model.Order;
 import org.pancakelab.model.OrderActionResult;
 import org.pancakelab.model.OrderStatus;
 import org.pancakelab.model.pancakes.*;
+import org.pancakelab.notification.OrderNotifier;
 import org.pancakelab.repository.OrderRepository;
 import org.pancakelab.validation.CreateOrderValidator;
 import org.pancakelab.validation.OrderStatusValidator;
@@ -12,9 +13,21 @@ import org.pancakelab.validation.ValidationResult;
 import java.util.*;
 
 public class PancakeService {
-    private final OrderRepository orderRepository = new OrderRepository();
-    private final CreateOrderValidator createOrderValidator = new CreateOrderValidator();
-    private final OrderStatusValidator orderStatusValidator = new OrderStatusValidator();
+    private final OrderRepository orderRepository;
+    private final CreateOrderValidator createOrderValidator;
+    private final OrderStatusValidator orderStatusValidator;
+    private final OrderNotifier orderNotifier;
+
+    public PancakeService() {
+        this(new OrderRepository(), new CreateOrderValidator(), new OrderStatusValidator(), new OrderNotifier());
+    }
+
+    public PancakeService(OrderRepository orderRepository, CreateOrderValidator createOrderValidator, OrderStatusValidator orderStatusValidator, OrderNotifier orderNotifier) {
+        this.orderRepository = orderRepository;
+        this.createOrderValidator = createOrderValidator;
+        this.orderStatusValidator = orderStatusValidator;
+        this.orderNotifier = orderNotifier;
+    }
 
     public OrderActionResult<Order> createOrder(int building, int room) {
         Order order = new Order(building, room);
@@ -23,6 +36,7 @@ public class PancakeService {
             return OrderActionResult.failed(String.format("Cannot create order due to the following errors: %s", validationResult));
         }
         orderRepository.upsertOrder(order);
+        orderNotifier.notifyCreatedOrder(order);
         return OrderActionResult.success(order);
     }
 
@@ -73,12 +87,16 @@ public class PancakeService {
 
     public OrderActionResult<Void> completeOrder(UUID orderId) {
         Order order = orderRepository.getOrderById(orderId);
-        OrderStatus status = orderRepository.getStatus(orderId);
+        if (Objects.isNull(order)) {
+            return OrderActionResult.failed("Order not found");
+        }
+        OrderStatus status = orderRepository.getStatus(order.getId());
         ValidationResult validationResult = orderStatusValidator.validateNextState(status, OrderStatus.COMPLETED);
         if(validationResult.isInvalid()) {
             return OrderActionResult.failed(validationResult.toString());
         }
         orderRepository.updateStatus(order.getId(), OrderStatus.COMPLETED);
+        orderNotifier.notifyCompletedOrder(order);
         return OrderActionResult.success();
     }
 
@@ -87,12 +105,17 @@ public class PancakeService {
     }
 
     public OrderActionResult<Void> prepareOrder(UUID orderId) {
-        OrderStatus status = orderRepository.getStatus(orderId);
+        Order order = orderRepository.getOrderById(orderId);
+        if (Objects.isNull(order)) {
+            return OrderActionResult.failed("Order not found");
+        }
+        OrderStatus status = orderRepository.getStatus(order.getId());
         ValidationResult validationResult = orderStatusValidator.validateNextState(status, OrderStatus.PREPARED);
         if(validationResult.isInvalid()) {
             return OrderActionResult.failed(validationResult.toString());
         }
-        orderRepository.updateStatus(orderId, OrderStatus.PREPARED);
+        orderRepository.updateStatus(order.getId(), OrderStatus.PREPARED);
+        orderNotifier.notifyPreparedOrder(order);
         return OrderActionResult.success();
     }
 
@@ -105,15 +128,16 @@ public class PancakeService {
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        OrderStatus status = orderRepository.getStatus(orderId);
+        OrderStatus status = orderRepository.getStatus(order.getId());
         ValidationResult validationResult = orderStatusValidator.validateNextState(status, OrderStatus.DELIVERED);
         if(validationResult.isInvalid()) {
             return OrderActionResult.failed(validationResult.toString());
         }
 
-        List<String> pancakesToDeliver = viewOrder(orderId);
+        List<String> pancakesToDeliver = viewOrder(order.getId());
         OrderLog.logDeliverOrder(order);
         orderRepository.delete(orderId);
+        orderNotifier.notifyDeliveredOrder(order);
         return OrderActionResult.success(new Object[]{order, pancakesToDeliver});
     }
 }
