@@ -50,11 +50,13 @@ public class PancakeService {
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        for (int i = 0; i < count; i++) {
-            order.addPancake(pancake);
+        synchronized (order) {
+            for (int i = 0; i < count; i++) {
+                order.addPancake(pancake);
+            }
+            OrderLog.logAddPancake(order, pancake.description());
+            return OrderActionResult.success();
         }
-        OrderLog.logAddPancake(order, pancake.description());
-        return OrderActionResult.success();
     }
 
     public OrderActionResult<Void> removePancakes(String description, UUID orderId, int count) {
@@ -62,9 +64,11 @@ public class PancakeService {
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        order.removePancakesByDescription(description, count);
-        OrderLog.logRemovePancakes(order, description, count);
-        return OrderActionResult.success();
+        synchronized (order) {
+            order.removePancakesByDescription(description, count);
+            OrderLog.logRemovePancakes(order, description, count);
+            return OrderActionResult.success();
+        }
     }
 
     public OrderActionResult<Void> cancelOrder(UUID orderId) {
@@ -86,12 +90,14 @@ public class PancakeService {
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        StateTransitionResult transitionResult = order.complete();
-        if(transitionResult.isInvalid()) {
-            return OrderActionResult.failed("Cannot complete order");
+        synchronized (order) {
+            StateTransitionResult transitionResult = order.complete();
+            if(transitionResult.isInvalid()) {
+                return OrderActionResult.failed("Cannot complete order");
+            }
+            orderNotifier.notifyCompletedOrder(order);
+            return OrderActionResult.success();
         }
-        orderNotifier.notifyCompletedOrder(order);
-        return OrderActionResult.success();
     }
 
     public Set<UUID> listCompletedOrders() {
@@ -103,12 +109,14 @@ public class PancakeService {
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        StateTransitionResult transitionResult = order.prepare();
-        if(transitionResult.isInvalid()) {
-            return OrderActionResult.failed("Cannot prepare order");
+        synchronized (order) {
+            StateTransitionResult transitionResult = order.prepare();
+            if(transitionResult.isInvalid()) {
+                return OrderActionResult.failed("Cannot prepare order");
+            }
+            orderNotifier.notifyPreparedOrder(order);
+            return OrderActionResult.success();
         }
-        orderNotifier.notifyPreparedOrder(order);
-        return OrderActionResult.success();
     }
 
     public Set<UUID> listPreparedOrders() {
@@ -120,14 +128,16 @@ public class PancakeService {
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");
         }
-        StateTransitionResult transitionResult = order.deliver();
-        if(transitionResult.isInvalid()) {
-            return OrderActionResult.failed("Cannot prepare order");
+        synchronized (order) {
+            StateTransitionResult transitionResult = order.deliver();
+            if(transitionResult.isInvalid()) {
+                return OrderActionResult.failed("Cannot prepare order");
+            }
+            List<String> pancakesToDeliver = viewOrder(order.getId());
+            orderRepository.delete(orderId);
+            orderNotifier.notifyDeliveredOrder(order);
+            OrderLog.logDeliverOrder(order);
+            return OrderActionResult.success(new Object[]{order, pancakesToDeliver});
         }
-        List<String> pancakesToDeliver = viewOrder(order.getId());
-        orderRepository.delete(orderId);
-        orderNotifier.notifyDeliveredOrder(order);
-        OrderLog.logDeliverOrder(order);
-        return OrderActionResult.success(new Object[]{order, pancakesToDeliver});
     }
 }

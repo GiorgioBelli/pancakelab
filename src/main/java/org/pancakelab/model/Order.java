@@ -37,16 +37,16 @@ public class Order {
         return room;
     }
 
-    public List<PancakeRecipe> getPancakes() {
+    public synchronized List<PancakeRecipe> getPancakes() {
         return pancakes;
     }
 
-    public Order addPancake(PancakeRecipe pancake) {
+    public synchronized Order addPancake(PancakeRecipe pancake) {
         this.pancakes.add(pancake);
         return this;
     }
 
-    public void removePancakesByDescription(String description, int count) {
+    public synchronized void removePancakesByDescription(String description, int count) {
         if (count <=0 ){
             return;
         }
@@ -74,27 +74,27 @@ public class Order {
         return Objects.hashCode(id);
     }
 
-    public OrderState getState() {
+    public synchronized OrderState getState() {
         return state;
     }
 
-    public void setState(OrderState state) {
+    public synchronized void setState(OrderState state) {
         this.state = state;
     }
 
-    public StateTransitionResult cancel() {
+    public synchronized StateTransitionResult cancel() {
         return state.cancel(this);
     }
 
-    public StateTransitionResult complete() {
+    public synchronized StateTransitionResult complete() {
         return state.complete(this);
     }
 
-    public StateTransitionResult prepare() {
+    public synchronized StateTransitionResult prepare() {
         return state.prepare(this);
     }
 
-    public StateTransitionResult deliver() {
+    public synchronized StateTransitionResult deliver() {
         return state.deliver(this);
     }
 }
