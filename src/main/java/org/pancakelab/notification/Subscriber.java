@@ -2,9 +2,9 @@ package org.pancakelab.notification;
 
 import java.util.List;
 
-public interface Subscriber {
+public interface Subscriber<T> {
 
-    void update(OrderUpdate orderUpdate);
+    void update(T orderUpdate);
     List<String> getSubject();
 
 }

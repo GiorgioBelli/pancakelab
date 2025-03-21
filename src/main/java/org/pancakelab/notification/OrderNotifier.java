@@ -3,7 +3,11 @@ package org.pancakelab.notification;
 import org.pancakelab.model.Order;
 import org.pancakelab.model.OrderStatus;
 
-public class OrderNotifier extends Notifier {
+public class OrderNotifier extends Notifier<OrderUpdate> {
+
+    public void notify(OrderUpdate orderUpdate) {
+        super.notify(orderUpdate, orderUpdate.orderStatus().toString());
+    }
 
     public void notifyCreatedOrder(Order order) {
         OrderUpdate message = new OrderUpdate(order, OrderStatus.CREATED);

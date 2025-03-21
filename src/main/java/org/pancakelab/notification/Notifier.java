@@ -6,29 +6,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Notifier {
+public class Notifier<T> {
 
-    private final Map<String, Set<Subscriber>> topicSubscribers = new ConcurrentHashMap<>();
+    private final Map<String, Set<Subscriber<T>>> topicSubscribers = new ConcurrentHashMap<>();
 
-    private void addSubscriber(Subscriber subscriber, String subject) {
-        Set<Subscriber> subscribers = this.topicSubscribers.computeIfAbsent(subject, k -> new HashSet<>());
-        subscribers.add(subscriber);
-    }
-
-    public void addSubscriber(Subscriber subscriber) {
+    public void addSubscriber(Subscriber<T> subscriber) {
         for (String subject : subscriber.getSubject()) {
-            this.addSubscriber(subscriber, subject);
+            Set<Subscriber<T>> subscribers = this.topicSubscribers.computeIfAbsent(subject, k -> new HashSet<>());
+            subscribers.add(subscriber);
         }
     }
 
-    private void notify(OrderUpdate orderUpdate, String subject) {
-        Set<Subscriber> subscribers = this.topicSubscribers.getOrDefault(subject, Collections.emptySet());
-        for (Subscriber subscriber : subscribers) {
-            subscriber.update(orderUpdate);
+    public void notify(T update, String subject) {
+        Set<Subscriber<T>> subscribers = this.topicSubscribers.getOrDefault(subject, Collections.emptySet());
+        for (Subscriber<T> subscriber : subscribers) {
+            subscriber.update(update);
         }
-    }
-
-    public void notify(OrderUpdate orderUpdate) {
-        this.notify(orderUpdate, orderUpdate.orderStatus().toString());
     }
 }

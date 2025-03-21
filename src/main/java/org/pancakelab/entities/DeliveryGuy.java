@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class DeliveryGuy implements Subscriber, Entity, Runnable {
+public class DeliveryGuy implements Subscriber<OrderUpdate>, Entity, Runnable {
 
     private final int id;
     private final PancakeService pancakeService;
