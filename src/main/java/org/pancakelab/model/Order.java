@@ -1,7 +1,7 @@
 package org.pancakelab.model;
 
-import org.pancakelab.model.pancakes.Pancake;
 import org.pancakelab.model.pancakes.PancakeRecipe;
+import org.pancakelab.model.state.CreatedState;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,12 +11,14 @@ public class Order {
     private final int building;
     private final int room;
     private final List<PancakeRecipe> pancakes;
+    private OrderState state;
 
     protected Order(UUID id, int building, int room) {
         this.id = id;
         this.building = building;
         this.room = room;
         this.pancakes = new ArrayList<>();
+        this.state = new CreatedState();
     }
 
     public Order(int building, int room) {
@@ -44,14 +46,13 @@ public class Order {
         return this;
     }
 
-    public Order removePancakesByDescription(String description, int count) {
+    public void removePancakesByDescription(String description, int count) {
         if (count <=0 ){
-            return this;
+            return;
         }
         final AtomicInteger removedCount = new AtomicInteger(0);
         this.getPancakes()
                 .removeIf(pancake -> pancake.description().equals(description) && removedCount.getAndIncrement() < count);
-        return this;
     }
 
     public List<String> view() {
@@ -71,5 +72,29 @@ public class Order {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    public OrderState getState() {
+        return state;
+    }
+
+    public void setState(OrderState state) {
+        this.state = state;
+    }
+
+    public StateTransitionResult cancel() {
+        return state.cancel(this);
+    }
+
+    public StateTransitionResult complete() {
+        return state.complete(this);
+    }
+
+    public StateTransitionResult prepare() {
+        return state.prepare(this);
+    }
+
+    public StateTransitionResult deliver() {
+        return state.deliver(this);
     }
 }

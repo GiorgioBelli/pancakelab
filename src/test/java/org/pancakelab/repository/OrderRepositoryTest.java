@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.pancakelab.model.Order;
 import org.pancakelab.model.OrderStatus;
 import org.pancakelab.model.pancakes.PancakeFactory;
+import org.pancakelab.model.state.CompletedState;
+import org.pancakelab.model.state.CreatedState;
+import org.pancakelab.model.state.PreparedState;
 
 import java.util.List;
 import java.util.Set;
@@ -29,9 +32,9 @@ class OrderRepositoryTest {
             repository.upsertOrder(order);
         }
 
-        repository.updateStatus(orders.get(0).getId(), OrderStatus.CREATED);
-        repository.updateStatus(orders.get(1).getId(), OrderStatus.PREPARED);
-        repository.updateStatus(orders.get(2).getId(), OrderStatus.COMPLETED);
+        orders.get(0).setState(new CreatedState());
+        orders.get(1).setState(new PreparedState());
+        orders.get(2).setState(new CompletedState());
     }
 
     @Test
@@ -94,7 +97,7 @@ class OrderRepositoryTest {
     void GivenOrder_WhenChangeStatus_ThenStatusHasChanged() {
         Order orderToUpdate = orders.get(0);
         int completedOrdersCount = repository.getCompletedOrders().size();
-        repository.updateStatus(orderToUpdate.getId(), OrderStatus.COMPLETED);
+        orderToUpdate.complete();
         Set<UUID> completedOrders = repository.getCompletedOrders();
         assertTrue(completedOrders.contains(orderToUpdate.getId()));
         assertEquals(completedOrdersCount+1, completedOrders.size());
@@ -102,8 +105,8 @@ class OrderRepositoryTest {
 
     @Test
     void GivenOrders_WhenHasStatus_ThenTrue() {
-        assertTrue(repository.hasStatus(orders.get(0).getId(), OrderStatus.CREATED));
-        assertTrue(repository.hasStatus(orders.get(1).getId(), OrderStatus.PREPARED));
-        assertTrue(repository.hasStatus(orders.get(2).getId(), OrderStatus.COMPLETED));
+        assertEquals(OrderStatus.CREATED, orders.get(0).getState().getStatus());
+        assertEquals(OrderStatus.PREPARED, orders.get(1).getState().getStatus());
+        assertEquals(OrderStatus.COMPLETED, orders.get(2).getState().getStatus());
     }
 }

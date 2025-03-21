@@ -7,13 +7,12 @@ import org.pancakelab.notification.OrderNotifier;
 import org.pancakelab.repository.OrderRepository;
 import org.pancakelab.service.PancakeService;
 import org.pancakelab.validation.CreateOrderValidator;
-import org.pancakelab.validation.OrderStatusValidator;
 
 public class Main {
     public static void main(String[] args) {
         OrderNotifier notifier = new OrderNotifier();
         PancakeService service = new PancakeService(
-                new OrderRepository(), new CreateOrderValidator(), new OrderStatusValidator(), notifier
+                new OrderRepository(), new CreateOrderValidator(), notifier
         ); // this could be a builder for more flexibility
 
         Disciple disciple1 = new Disciple(1, service);
