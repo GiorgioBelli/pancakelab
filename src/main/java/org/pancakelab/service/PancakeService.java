@@ -48,7 +48,7 @@ public class PancakeService {
         return order.view();
     }
 
-    public OrderActionResult<Void> addPancake(UUID orderId, Pancake pancake, int count) {
+    public OrderActionResult<Void> addPancake(UUID orderId, PancakeRecipe pancake, int count) {
         Order order = orderRepository.getOrderById(orderId);
         if (Objects.isNull(order)) {
             return OrderActionResult.failed("Order not found");

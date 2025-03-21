@@ -1,6 +1,7 @@
 package org.pancakelab.model;
 
 import org.pancakelab.model.pancakes.Pancake;
+import org.pancakelab.model.pancakes.PancakeRecipe;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,7 +10,7 @@ public class Order {
     private final UUID id;
     private final int building;
     private final int room;
-    private final List<Pancake> pancakes;
+    private final List<PancakeRecipe> pancakes;
 
     protected Order(UUID id, int building, int room) {
         this.id = id;
@@ -34,11 +35,11 @@ public class Order {
         return room;
     }
 
-    public List<Pancake> getPancakes() {
+    public List<PancakeRecipe> getPancakes() {
         return pancakes;
     }
 
-    public Order addPancake(Pancake pancake) {
+    public Order addPancake(PancakeRecipe pancake) {
         this.pancakes.add(pancake);
         return this;
     }
@@ -55,7 +56,7 @@ public class Order {
 
     public List<String> view() {
         return this.getPancakes().stream()
-                .map(Pancake::description)
+                .map(PancakeRecipe::description)
                 .toList();
     }
 
