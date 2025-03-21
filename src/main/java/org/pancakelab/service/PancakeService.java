@@ -4,7 +4,8 @@ import org.pancakelab.model.Order;
 import org.pancakelab.model.OrderActionResult;
 import org.pancakelab.model.StateTransitionResult;
 import org.pancakelab.model.pancakes.*;
-import org.pancakelab.notification.OrderNotifier;
+import org.pancakelab.notification.PancakesNotifier;
+import org.pancakelab.notification.StatusNotifier;
 import org.pancakelab.repository.OrderRepository;
 import org.pancakelab.validation.CreateOrderValidator;
 import org.pancakelab.validation.ValidationResult;
@@ -14,16 +15,18 @@ import java.util.*;
 public class PancakeService {
     private final OrderRepository orderRepository;
     private final CreateOrderValidator createOrderValidator;
-    private final OrderNotifier orderNotifier;
+    private final StatusNotifier statusNotifier;
+    private final PancakesNotifier pancakesNotifier;
 
     public PancakeService() {
-        this(new OrderRepository(), new CreateOrderValidator(), new OrderNotifier());
+        this(new OrderRepository(), new CreateOrderValidator(), new StatusNotifier(), new PancakesNotifier());
     }
 
-    public PancakeService(OrderRepository orderRepository, CreateOrderValidator createOrderValidator, OrderNotifier orderNotifier) {
+    public PancakeService(OrderRepository orderRepository, CreateOrderValidator createOrderValidator, StatusNotifier statusNotifier, PancakesNotifier pancakesNotifier) {
         this.orderRepository = orderRepository;
         this.createOrderValidator = createOrderValidator;
-        this.orderNotifier = orderNotifier;
+        this.statusNotifier = statusNotifier;
+        this.pancakesNotifier = pancakesNotifier;
     }
 
     public OrderActionResult<Order> createOrder(int building, int room) {
@@ -33,7 +36,7 @@ public class PancakeService {
             return OrderActionResult.failed(String.format("Cannot create order due to the following errors: %s", validationResult));
         }
         orderRepository.upsertOrder(order);
-        orderNotifier.notifyCreatedOrder(order);
+        statusNotifier.notifyCreatedOrder(order);
         return OrderActionResult.success(order);
     }
 
@@ -55,6 +58,7 @@ public class PancakeService {
                 order.addPancake(pancake);
             }
             OrderLog.logAddPancake(order, pancake.description());
+            pancakesNotifier.notifyPancakeAdded(order, pancake.description(), count);
             return OrderActionResult.success();
         }
     }
@@ -67,6 +71,7 @@ public class PancakeService {
         synchronized (order) {
             order.removePancakesByDescription(description, count);
             OrderLog.logRemovePancakes(order, description, count);
+            pancakesNotifier.notifyPancakeRemoved(order, description, count);
             return OrderActionResult.success();
         }
     }
@@ -95,7 +100,7 @@ public class PancakeService {
             if(transitionResult.isInvalid()) {
                 return OrderActionResult.failed("Cannot complete order");
             }
-            orderNotifier.notifyCompletedOrder(order);
+            statusNotifier.notifyCompletedOrder(order);
             return OrderActionResult.success();
         }
     }
@@ -114,7 +119,7 @@ public class PancakeService {
             if(transitionResult.isInvalid()) {
                 return OrderActionResult.failed("Cannot prepare order");
             }
-            orderNotifier.notifyPreparedOrder(order);
+            statusNotifier.notifyPreparedOrder(order);
             return OrderActionResult.success();
         }
     }
@@ -135,7 +140,7 @@ public class PancakeService {
             }
             List<String> pancakesToDeliver = viewOrder(order.getId());
             orderRepository.delete(orderId);
-            orderNotifier.notifyDeliveredOrder(order);
+            statusNotifier.notifyDeliveredOrder(order);
             OrderLog.logDeliverOrder(order);
             return OrderActionResult.success(new Object[]{order, pancakesToDeliver});
         }

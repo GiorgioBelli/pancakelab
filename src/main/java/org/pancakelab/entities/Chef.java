@@ -2,15 +2,15 @@ package org.pancakelab.entities;
 
 import org.pancakelab.model.Order;
 import org.pancakelab.model.OrderStatus;
-import org.pancakelab.notification.OrderUpdate;
 import org.pancakelab.notification.Subscriber;
+import org.pancakelab.notification.messages.StatusUpdate;
 import org.pancakelab.service.PancakeService;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Chef implements Subscriber<OrderUpdate>, Entity, Runnable {
+public class Chef implements Subscriber<StatusUpdate>, Entity, Runnable {
 
     private final int id;
     private final PancakeService pancakeService;
@@ -23,9 +23,9 @@ public class Chef implements Subscriber<OrderUpdate>, Entity, Runnable {
     }
 
     @Override
-    public void update(OrderUpdate orderUpdate) {
+    public void update(StatusUpdate statusUpdate) {
         try {
-            this.readyToPrepareOrders.put(orderUpdate.order());
+            this.readyToPrepareOrders.put(statusUpdate.getOrder());
         } catch (InterruptedException e) {
             // TODO - refactor this part with a retry or something similar
             throw new RuntimeException(e);

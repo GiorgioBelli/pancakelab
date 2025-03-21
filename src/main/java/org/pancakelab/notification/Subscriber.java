@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface Subscriber<T> {
 
-    void update(T orderUpdate);
+    <V extends T> void update(V update);
     List<String> getSubject();
 
 }
