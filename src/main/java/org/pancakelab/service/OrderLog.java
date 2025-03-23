@@ -29,7 +29,7 @@ public class OrderLog {
            .append("for building %d, room %d out for delivery.".formatted(order.getBuilding(), order.getRoom()));
     }
 
-    public synchronized void print() {
+    public synchronized void getLog() {
         System.out.println(log);
     }
 

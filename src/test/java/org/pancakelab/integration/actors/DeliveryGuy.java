@@ -1,4 +1,4 @@
-package org.pancakelab.entities;
+package org.pancakelab.integration.actors;
 
 import org.pancakelab.model.Order;
 import org.pancakelab.model.OrderStatus;
@@ -8,18 +8,22 @@ import org.pancakelab.service.PancakeService;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class DeliveryGuy implements Subscriber<StatusUpdate>, Entity, Runnable {
+public class DeliveryGuy implements Subscriber<StatusUpdate>, Entity, Callable<Void> {
 
     private final int id;
     private final PancakeService pancakeService;
     private final BlockingQueue<Order> deliverableOrders;
+    private final AtomicInteger processAmount;
 
-    public DeliveryGuy(int id, PancakeService pancakeService) {
+    public DeliveryGuy(int id, PancakeService pancakeService, int processAmount) {
         this.id = id;
         this.pancakeService = pancakeService;
         this.deliverableOrders = new LinkedBlockingQueue<>();
+        this.processAmount = new AtomicInteger(processAmount);
     }
 
     @Override
@@ -42,16 +46,16 @@ public class DeliveryGuy implements Subscriber<StatusUpdate>, Entity, Runnable {
     }
 
     @Override
-    public void run() {
-        while (true) {
+    public Void call() throws Exception {
+        while (processAmount.getAndDecrement() > 0 ) {
             try {
                 Order order = this.deliverableOrders.take();
                 log("Delivering order: %s", order.getId());
-                Thread.sleep(5000);
                 pancakeService.deliverOrder(order.getId());
             } catch (InterruptedException e) {
                 // TODO - handle it
             }
         }
+        return null;
     }
 }

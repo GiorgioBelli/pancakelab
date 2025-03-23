@@ -1,4 +1,4 @@
-package org.pancakelab.entities;
+package org.pancakelab.integration.actors;
 
 public interface Entity {
 
