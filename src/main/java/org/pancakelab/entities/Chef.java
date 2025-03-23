@@ -28,7 +28,6 @@ public class Chef implements Subscriber<StatusUpdate>, Entity, Runnable {
             this.readyToPrepareOrders.put(statusUpdate.getOrder());
         } catch (InterruptedException e) {
             // TODO - refactor this part with a retry or something similar
-            throw new RuntimeException(e);
         }
     }
 

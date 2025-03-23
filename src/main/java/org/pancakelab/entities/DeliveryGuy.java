@@ -28,7 +28,6 @@ public class DeliveryGuy implements Subscriber<StatusUpdate>, Entity, Runnable {
             this.deliverableOrders.put(statusUpdate.getOrder());
         } catch (InterruptedException e) {
             // TODO - refactor this part with a retry or something similar
-            throw new RuntimeException(e);
         }
     }
 

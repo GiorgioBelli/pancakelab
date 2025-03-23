@@ -57,7 +57,6 @@ public class PancakeService {
             for (int i = 0; i < count; i++) {
                 order.addPancake(pancake);
             }
-            OrderLog.logAddPancake(order, pancake.description());
             pancakesNotifier.notifyPancakeAdded(order, pancake.description(), count);
             return OrderActionResult.success();
         }
@@ -70,7 +69,6 @@ public class PancakeService {
         }
         synchronized (order) {
             order.removePancakesByDescription(description, count);
-            OrderLog.logRemovePancakes(order, description, count);
             pancakesNotifier.notifyPancakeRemoved(order, description, count);
             return OrderActionResult.success();
         }
@@ -86,7 +84,6 @@ public class PancakeService {
             return OrderActionResult.failed("Cannot cancel order");
         }
         orderRepository.delete(orderId);
-        OrderLog.logCancelOrder(order);
         return OrderActionResult.success();
     }
 
@@ -141,7 +138,6 @@ public class PancakeService {
             List<String> pancakesToDeliver = viewOrder(order.getId());
             orderRepository.delete(orderId);
             statusNotifier.notifyDeliveredOrder(order);
-            OrderLog.logDeliverOrder(order);
             return OrderActionResult.success(new Object[]{order, pancakesToDeliver});
         }
     }

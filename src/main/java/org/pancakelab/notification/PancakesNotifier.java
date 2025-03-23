@@ -7,7 +7,7 @@ import org.pancakelab.notification.messages.PancakesUpdate;
 public class PancakesNotifier extends Notifier<PancakesUpdate> {
 
     protected void notify(PancakesUpdate update) {
-        super.notify(update, update.getOrder().getState().getStatus().toString());
+        super.notify(update, update.getAction().toString());
     }
 
     public void notifyPancakeAdded(Order order, String description, int count) {
